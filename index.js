@@ -27,6 +27,7 @@ async function run() {
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     const serviceCollection = client.db("carDoctor2").collection("services");
+    const bookingCollection = client.db("carDoctor2").collection("booking");
     app.get("/services", async (req, res) => {
       const cursor = serviceCollection.find();
       const result = await cursor.toArray();
@@ -36,9 +37,27 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const options = {
-        projection: { title: 1, price: 1, service_id: 1 },
+        projection: { title: 1, price: 1, service_id: 1, img: 1 },
       };
       const result = await serviceCollection.findOne(query, options);
+      res.send(result);
+    });
+
+    // booking
+    app.get("/bookings", async (req, res) => {
+      console.log(req.query.email);
+      let query = {};
+      if (req.query?.email) {
+        query = req.query;
+      }
+      console.log(query);
+      const cursor = bookingCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    app.post("/bookings", async (req, res) => {
+      const data = req.body;
+      const result = await bookingCollection.insertOne(data);
       res.send(result);
     });
     // const cursor = movies.find();
