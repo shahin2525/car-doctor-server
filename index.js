@@ -49,7 +49,15 @@ async function run() {
       let query = {};
       if (req.query?.email) {
         query = req.query;
+        //
       }
+      app.delete("/bookings/:id", async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await bookingCollection.deleteOne(query);
+        res.send(result);
+      });
+
       console.log(query);
       const cursor = bookingCollection.find(query);
       const result = await cursor.toArray();
