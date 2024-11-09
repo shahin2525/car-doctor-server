@@ -45,20 +45,12 @@ async function run() {
 
     // booking
     app.get("/bookings", async (req, res) => {
-      console.log(req.query.email);
+      // console.log(req.query.email);
       let query = {};
       if (req.query?.email) {
         query = req.query;
-        //
       }
-      app.delete("/bookings/:id", async (req, res) => {
-        const id = req.params.id;
-        const query = { _id: new ObjectId(id) };
-        const result = await bookingCollection.deleteOne(query);
-        res.send(result);
-      });
 
-      console.log(query);
       const cursor = bookingCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
@@ -66,6 +58,26 @@ async function run() {
     app.post("/bookings", async (req, res) => {
       const data = req.body;
       const result = await bookingCollection.insertOne(data);
+      res.send(result);
+    });
+    app.delete("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookingCollection.deleteOne(query);
+      res.send(result);
+    });
+    app.patch("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateData = req.body;
+      console.log(updateData)
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          plot: updateData,
+        },
+      };
+      const result = await bookingCollection.updateOne(query, updateDoc);
+
       res.send(result);
     });
     // const cursor = movies.find();
