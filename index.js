@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
-import jwt from "jsonwebtoken";
-import cookie from "cookie-parser";
+import jwt, { decode } from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 
 import cors from "cors";
 import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
@@ -15,6 +15,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(cookieParser());
 
 const uri = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASSWORD}@cluster0.ax6qyiu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -26,6 +27,23 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+// verify jwt token
+
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token;
+  // console.log("very", token);
+  if (!token) {
+    return res.status(401).send("unauthorized");
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decode) => {
+    if (error) {
+      return res.status(401).send("unauthorized");
+    }
+    // console.log("deco", decode);
+    req.user = decode;
+    next();
+  });
+};
 
 async function run() {
   try {
@@ -44,8 +62,10 @@ async function run() {
       });
       res
         .cookie("token", token, {
+          // httpOnly: true,
+          // sameSite: "lax",
+          // secure: false,
           httpOnly: true,
-          sameSite: "none",
           secure: false,
         })
         .send({ success: true });
@@ -67,8 +87,12 @@ async function run() {
     });
 
     // booking
-    app.get("/bookings", async (req, res) => {
+    app.get("/bookings", verifyToken, async (req, res) => {
       // console.log(req.query.email);
+      // console.log("tok tok", req.cookies.token);
+      if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
       let query = {};
       if (req.query?.email) {
         query = req.query;
